@@ -6,16 +6,43 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
   shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
 }
 
+model TimeEntry {
+  id          Int      @id @default(autoincrement())
+  date        DateTime // The actual date of the time entry
+  startTime   DateTime // Start time of the work period
+  endTime     DateTime // End time of the work period
+  lunchTime   Int      // Lunch break duration in minutes
+  isHoliday   Boolean  @default(false)
+  holidayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("time_entries")
+}
+
+model Holiday {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("holidays")
+}
+
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  password  String
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+
+  @@map("users")
 }
 
 // add more models here
