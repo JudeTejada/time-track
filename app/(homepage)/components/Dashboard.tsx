@@ -376,6 +376,15 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
 
       <div className='mt-6 p-4 rounded-md border'>
         {(() => {
+          // Get the first day worked
+          const sortedEntries = [...timeEntries].sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+          );
+          const firstDay = sortedEntries.length > 0 ? new Date(sortedEntries[0].date) : null;
+
+          // Calculate leave days (holidays)
+          const leaveDays = timeEntries.filter(entry => entry.isHoliday).length;
+
           const totalHoursWorked = timeEntries.reduce((acc, entry) => {
             if (entry.isHoliday) return acc;
             const start = new Date(entry.startTime);
@@ -406,6 +415,20 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
 
           return (
             <div className='space-y-2'>
+              {firstDay && (
+                <div className='flex justify-between items-center'>
+                  <span className='text-sm font-medium'>Started On:</span>
+                  <span className='text-lg font-bold'>
+                    {formatDateToPH(firstDay)}
+                  </span>
+                </div>
+              )}
+              <div className='flex justify-between items-center'>
+                <span className='text-sm font-medium'>Leave Days Taken:</span>
+                <span className='text-lg font-bold text-orange-600'>
+                  {leaveDays} days
+                </span>
+              </div>
               <div className='flex justify-between items-center'>
                 <span className='text-sm font-medium'>Total Hours Worked:</span>
                 <span className='text-lg font-bold'>
