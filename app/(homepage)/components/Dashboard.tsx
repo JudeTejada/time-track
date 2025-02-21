@@ -20,6 +20,8 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { TimeTrackingPDF } from '@/lib/generatePdf';
 
 // Update TimeEntry interface
 interface TimeEntry {
@@ -202,6 +204,16 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
           >
             {isCheckingIn ? 'Checking In...' : 'Quick Check In'}
           </Button>
+          <PDFDownloadLink
+            document={<TimeTrackingPDF entries={timeEntries} />}
+            fileName='time-tracking-report.pdf'
+          >
+            {({ loading }) => (
+              <Button variant='outline' disabled={loading}>
+                {loading ? 'Generating PDF...' : 'Download PDF'}
+              </Button>
+            )}
+          </PDFDownloadLink>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button>Add Time Entry</Button>
@@ -298,81 +310,86 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
         </div>
       </div>
 
-            <div className='rounded-md border'>
-              {Object.entries(groupEntriesByWeek(timeEntries))
-                .sort((a, b) => b[0].localeCompare(a[0])) // Sort weeks in descending order
-                .map(([weekKey, weekEntries]) => (
-                  <div key={weekKey} className="mb-8">
-                    <h2 className="text-lg font-semibold mb-4 px-4">Week {weekKey}</h2>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Start Time</TableHead>
-                          <TableHead>End Time</TableHead>
-                          <TableHead>Lunch Break</TableHead>
-                          <TableHead>Total Hours</TableHead>
-                          <TableHead>Holiday</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {weekEntries.map(entry => {
+      <div className='rounded-md border'>
+        {Object.entries(groupEntriesByWeek(timeEntries))
+          .sort((a, b) => b[0].localeCompare(a[0])) // Sort weeks in descending order
+          .map(([weekKey, weekEntries]) => (
+            <div key={weekKey} className='mb-8'>
+              <h2 className='text-lg font-semibold mb-4 px-4'>
+                Week {weekKey}
+              </h2>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Start Time</TableHead>
+                    <TableHead>End Time</TableHead>
+                    <TableHead>Lunch Break</TableHead>
+                    <TableHead>Total Hours</TableHead>
+                    <TableHead>Holiday</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {weekEntries.map(entry => {
+                    const start = new Date(entry.startTime);
+                    const end = new Date(entry.endTime);
+                    const totalMinutes = entry.isHoliday
+                      ? 0
+                      : (end.getTime() - start.getTime()) / 1000 / 60 -
+                        entry.lunchTime;
+                    const totalHours = entry.isHoliday
+                      ? '-'
+                      : (totalMinutes / 60).toFixed(2);
+
+                    return (
+                      <TableRow key={entry.id}>
+                        <TableCell>{formatDate(entry.date)}</TableCell>
+                        <TableCell>
+                          {entry.isHoliday ? '-' : formatTime(entry.startTime)}
+                        </TableCell>
+                        <TableCell>
+                          {entry.isHoliday ? '-' : formatTime(entry.endTime)}
+                        </TableCell>
+                        <TableCell>
+                          {entry.isHoliday ? '-' : `${entry.lunchTime} mins`}
+                        </TableCell>
+                        <TableCell>
+                          {entry.isHoliday ? '-' : `${totalHours} hrs`}
+                        </TableCell>
+                        <TableCell>
+                          {entry.isHoliday && (
+                            <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700'>
+                              {entry.holidayName || 'Holiday'}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow className='bg-gray-50'>
+                    <TableCell colSpan={4} className='font-medium'>
+                      Weekly Total
+                    </TableCell>
+                    <TableCell colSpan={2} className='font-medium'>
+                      {weekEntries
+                        .reduce((acc, entry) => {
+                          if (entry.isHoliday) return acc;
                           const start = new Date(entry.startTime);
                           const end = new Date(entry.endTime);
-                          const totalMinutes = entry.isHoliday
-                            ? 0
-                            : (end.getTime() - start.getTime()) / 1000 / 60 -
-                              entry.lunchTime;
-                          const totalHours = entry.isHoliday
-                            ? '-'
-                            : (totalMinutes / 60).toFixed(2);
-
-                          return (
-                            <TableRow key={entry.id}>
-                              <TableCell>{formatDate(entry.date)}</TableCell>
-                              <TableCell>
-                                {entry.isHoliday ? '-' : formatTime(entry.startTime)}
-                              </TableCell>
-                              <TableCell>
-                                {entry.isHoliday ? '-' : formatTime(entry.endTime)}
-                              </TableCell>
-                              <TableCell>
-                                {entry.isHoliday ? '-' : `${entry.lunchTime} mins`}
-                              </TableCell>
-                              <TableCell>
-                                {entry.isHoliday ? '-' : `${totalHours} hrs`}
-                              </TableCell>
-                              <TableCell>
-                                {entry.isHoliday && (
-                                  <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700'>
-                                    {entry.holidayName || 'Holiday'}
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        <TableRow className="bg-gray-50">
-                          <TableCell colSpan={4} className="font-medium">
-                            Weekly Total
-                          </TableCell>
-                          <TableCell colSpan={2} className="font-medium">
-                            {weekEntries.reduce((acc, entry) => {
-                              if (entry.isHoliday) return acc;
-                              const start = new Date(entry.startTime);
-                              const end = new Date(entry.endTime);
-                              const totalMinutes =
-                                (end.getTime() - start.getTime()) / 1000 / 60 -
-                                entry.lunchTime;
-                              return acc + totalMinutes / 60;
-                            }, 0).toFixed(2)} hrs
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                ))}
+                          const totalMinutes =
+                            (end.getTime() - start.getTime()) / 1000 / 60 -
+                            entry.lunchTime;
+                          return acc + totalMinutes / 60;
+                        }, 0)
+                        .toFixed(2)}{' '}
+                      hrs
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
+          ))}
+      </div>
 
       <div className='mt-6 p-4 rounded-md border'>
         {(() => {
@@ -380,7 +397,8 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
           const sortedEntries = [...timeEntries].sort(
             (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
           );
-          const firstDay = sortedEntries.length > 0 ? new Date(sortedEntries[0].date) : null;
+          const firstDay =
+            sortedEntries.length > 0 ? new Date(sortedEntries[0].date) : null;
 
           // Calculate leave days (holidays)
           const leaveDays = timeEntries.filter(entry => entry.isHoliday).length;
@@ -408,7 +426,10 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
           while (addedDays < daysToAdd) {
             expectedEndDate.setDate(expectedEndDate.getDate() + 1);
             // Skip weekends
-            if (expectedEndDate.getDay() !== 0 && expectedEndDate.getDay() !== 6) {
+            if (
+              expectedEndDate.getDay() !== 0 &&
+              expectedEndDate.getDay() !== 6
+            ) {
               addedDays++;
             }
           }
@@ -443,14 +464,12 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
               </div>
               <div className='flex justify-between items-center'>
                 <span className='text-sm font-medium'>Days Rendered:</span>
-                <span className='text-lg font-bold'>
-                  {daysRendered} days
-                </span>
+                <span className='text-lg font-bold'>{daysRendered} days</span>
               </div>
               <div className='flex justify-between items-center'>
                 <span className='text-sm font-medium'>Days Left:</span>
                 <span className='text-lg font-bold text-blue-600'>
-                {daysLeft} days
+                  {daysLeft} days
                 </span>
               </div>
               <div className='flex justify-between items-center'>
