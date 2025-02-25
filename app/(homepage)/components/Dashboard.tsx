@@ -20,10 +20,13 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
-const PDFDownloadLink = dynamic(() => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink), {
-  ssr: false,
-  loading: () => <p>Loading...</p>
-});
+const PDFDownloadLink = dynamic(
+  () => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink),
+  {
+    ssr: false,
+    loading: () => <p>Loading...</p>
+  }
+);
 import { TimeTrackingPDF } from '@/lib/generatePdf';
 import dynamic from 'next/dynamic';
 
@@ -87,7 +90,9 @@ const groupEntriesByWeek = (entries: TimeEntry[]) => {
 
   // Sort entries within each week by date
   Object.keys(grouped).forEach(key => {
-    grouped[key].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    grouped[key].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
   });
 
   return grouped;
@@ -98,7 +103,6 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
   const [open, setOpen] = useState(false);
 
   const [isCheckingIn, setIsCheckingIn] = useState(false);
-  console.log(timeEntries);
 
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -186,7 +190,7 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
   };
 
   return (
-    <div className='p-8'>
+    <div className='p-3 md:p-8'>
       {showConfetti && (
         <ReactConfetti
           width={window.innerWidth}
@@ -196,39 +200,41 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
         />
       )}
 
-      <div className='flex items-center justify-between mb-8'>
+      <div className='flex items-center justify-between mb-8 flex-col md:flex-row'>
         <h1 className='text-3xl font-bold tracking-tight'>
           Time Tracking Dashboard
         </h1>
-        <div className='flex gap-2'>
+        <div className='flex gap-4 flex-col w-full md:flex-row md:justify-end md:w-auto'>
           <Button
             onClick={handleCheckIn}
             variant='secondary'
             disabled={isCheckingIn}
+            className='w-full md:w-auto'
           >
             {isCheckingIn ? 'Checking In...' : 'Quick Check In'}
           </Button>
           <PDFDownloadLink
             document={<TimeTrackingPDF entries={timeEntries} />}
             fileName='time-tracking-report.pdf'
+            className='w-full md:w-auto'
           >
             {({ loading }) => (
-              <Button variant='outline' disabled={loading}>
+              <Button variant='outline' disabled={loading} className='w-full md:w-auto'>
                 {loading ? 'Generating PDF...' : 'Download PDF'}
               </Button>
             )}
           </PDFDownloadLink>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button>Add Time Entry</Button>
+              <Button className='w-full md:w-auto'>Add Time Entry</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='w-[95vw] max-w-md mx-auto md:w-full'>
               <DialogHeader>
                 <DialogTitle>Add New Time Entry</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className='space-y-4'>
                 <div className='space-y-2'>
-                  <label htmlFor='date' className='text-sm font-medium'>
+                  <label htmlFor='date' className='text-sm font-medium block'>
                     Date
                   </label>
                   <Input
@@ -237,10 +243,11 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                     required
                     value={formData.date}
                     onChange={handleInputChange}
+                    className='w-full'
                   />
                 </div>
                 <div className='space-y-2'>
-                  <label htmlFor='startTime' className='text-sm font-medium'>
+                  <label htmlFor='startTime' className='text-sm font-medium block'>
                     Start Time
                   </label>
                   <Input
@@ -249,10 +256,11 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                     required
                     value={formData.startTime}
                     onChange={handleInputChange}
+                    className='w-full'
                   />
                 </div>
                 <div className='space-y-2'>
-                  <label htmlFor='endTime' className='text-sm font-medium'>
+                  <label htmlFor='endTime' className='text-sm font-medium block'>
                     End Time
                   </label>
                   <Input
@@ -261,10 +269,11 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                     required
                     value={formData.endTime}
                     onChange={handleInputChange}
+                    className='w-full'
                   />
                 </div>
                 <div className='space-y-2'>
-                  <label htmlFor='lunchTime' className='text-sm font-medium'>
+                  <label htmlFor='lunchTime' className='text-sm font-medium block'>
                     Lunch Time (minutes)
                   </label>
                   <Input
@@ -274,10 +283,11 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                     value={formData.lunchTime}
                     onChange={handleInputChange}
                     min='0'
+                    className='w-full'
                   />
                 </div>
                 <div className='space-y-2'>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 mb-2'>
                     <input
                       type='checkbox'
                       id='isHoliday'
@@ -288,7 +298,7 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                           isHoliday: e.target.checked
                         }))
                       }
-                      className='h-4 w-4'
+                      className='h-5 w-5'
                     />
                     <label htmlFor='isHoliday' className='text-sm font-medium'>
                       Is Holiday?
@@ -302,6 +312,7 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
                       placeholder='Holiday Name'
                       value={formData.holidayName}
                       onChange={handleInputChange}
+                      className='w-full'
                     />
                   )}
                 </div>
@@ -322,75 +333,97 @@ export function Dashboard({ timeEntries }: { timeEntries: TimeEntry[] }) {
               <h2 className='text-lg font-semibold mb-4 px-4'>
                 Week {weekKey}
               </h2>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Start Time</TableHead>
-                    <TableHead>End Time</TableHead>
-                    <TableHead>Lunch Break</TableHead>
-                    <TableHead>Total Hours</TableHead>
-                    <TableHead>Holiday</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {weekEntries.map(entry => {
-                    const start = new Date(entry.startTime);
-                    const end = new Date(entry.endTime);
-                    const totalMinutes = entry.isHoliday
-                      ? 0
-                      : (end.getTime() - start.getTime()) / 1000 / 60 -
-                        entry.lunchTime;
-                    const totalHours = entry.isHoliday
-                      ? '-'
-                      : (totalMinutes / 60).toFixed(2);
+              <div className='overflow-x-auto'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='whitespace-nowrap'>Date</TableHead>
+                      <TableHead className='whitespace-nowrap'>
+                        Start Time
+                      </TableHead>
+                      <TableHead className='whitespace-nowrap'>
+                        End Time
+                      </TableHead>
+                      <TableHead className='whitespace-nowrap'>
+                        Lunch Break
+                      </TableHead>
+                      <TableHead className='whitespace-nowrap'>
+                        Total Hours
+                      </TableHead>
+                      <TableHead className='whitespace-nowrap'>
+                        Holiday
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {weekEntries.map(entry => {
+                      const start = new Date(entry.startTime);
+                      const end = new Date(entry.endTime);
+                      const totalMinutes = entry.isHoliday
+                        ? 0
+                        : (end.getTime() - start.getTime()) / 1000 / 60 -
+                          entry.lunchTime;
+                      const totalHours = entry.isHoliday
+                        ? '-'
+                        : (totalMinutes / 60).toFixed(2);
 
-                    return (
-                      <TableRow key={entry.id}>
-                        <TableCell>{formatDate(entry.date)}</TableCell>
-                        <TableCell>
-                          {entry.isHoliday ? '-' : formatTime(entry.startTime)}
-                        </TableCell>
-                        <TableCell>
-                          {entry.isHoliday ? '-' : formatTime(entry.endTime)}
-                        </TableCell>
-                        <TableCell>
-                          {entry.isHoliday ? '-' : `${entry.lunchTime} mins`}
-                        </TableCell>
-                        <TableCell>
-                          {entry.isHoliday ? '-' : `${totalHours} hrs`}
-                        </TableCell>
-                        <TableCell>
-                          {entry.isHoliday && (
-                            <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700'>
-                              {entry.holidayName || 'Holiday'}
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  <TableRow className='bg-gray-50'>
-                    <TableCell colSpan={4} className='font-medium'>
-                      Weekly Total
-                    </TableCell>
-                    <TableCell colSpan={2} className='font-medium'>
-                      {weekEntries
-                        .reduce((acc, entry) => {
-                          if (entry.isHoliday) return acc;
-                          const start = new Date(entry.startTime);
-                          const end = new Date(entry.endTime);
-                          const totalMinutes =
-                            (end.getTime() - start.getTime()) / 1000 / 60 -
-                            entry.lunchTime;
-                          return acc + totalMinutes / 60;
-                        }, 0)
-                        .toFixed(2)}{' '}
-                      hrs
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                      return (
+                        <TableRow key={entry.id}>
+                          <TableCell className='whitespace-nowrap font-medium'>
+                            {formatDate(entry.date)}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            {entry.isHoliday
+                              ? '-'
+                              : formatTime(entry.startTime)}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            {entry.isHoliday ? '-' : formatTime(entry.endTime)}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            {entry.isHoliday ? '-' : `${entry.lunchTime} mins`}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            {entry.isHoliday ? '-' : `${totalHours} hrs`}
+                          </TableCell>
+                          <TableCell className='whitespace-nowrap'>
+                            {entry.isHoliday && (
+                              <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700'>
+                                {entry.holidayName || 'Holiday'}
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow className='bg-gray-50'>
+                      <TableCell
+                        colSpan={4}
+                        className='font-medium whitespace-nowrap'
+                      >
+                        Weekly Total
+                      </TableCell>
+                      <TableCell
+                        colSpan={2}
+                        className='font-medium whitespace-nowrap'
+                      >
+                        {weekEntries
+                          .reduce((acc, entry) => {
+                            if (entry.isHoliday) return acc;
+                            const start = new Date(entry.startTime);
+                            const end = new Date(entry.endTime);
+                            const totalMinutes =
+                              (end.getTime() - start.getTime()) / 1000 / 60 -
+                              entry.lunchTime;
+                            return acc + totalMinutes / 60;
+                          }, 0)
+                          .toFixed(2)}{' '}
+                        hrs
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ))}
       </div>
