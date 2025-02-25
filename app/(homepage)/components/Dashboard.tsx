@@ -20,8 +20,12 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+const PDFDownloadLink = dynamic(() => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink), {
+  ssr: false,
+  loading: () => <p>Loading...</p>
+});
 import { TimeTrackingPDF } from '@/lib/generatePdf';
+import dynamic from 'next/dynamic';
 
 // Update TimeEntry interface
 interface TimeEntry {
