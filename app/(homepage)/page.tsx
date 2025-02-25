@@ -4,6 +4,10 @@ import { TableSkeleton } from './components/TableSkeleton';
 import { TimeEntry } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
+
+export const revalidate = 43200 // revalidate at most every 12 hours
+
+
 const getData = async (): Promise<TimeEntry[]> => {
   // const response = await fetch('/api/time-entries');
   // const data = await response.json();
